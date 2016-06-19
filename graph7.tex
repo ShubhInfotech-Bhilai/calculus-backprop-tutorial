@@ -1,0 +1,62 @@
+\usetikzlibrary{shadings,shadows,shapes.arrows}
+
+\begin{tikzpicture}
+	\tikzstyle{blockstyle} = [draw,drop shadow,outer sep=3,inner sep=7,minimum size=57,line width=1, thin, draw=black!55, top color=white,bottom color=cyan]
+	
+	%%%%%%%%%%%%%%
+	% Left figure
+	%%%%%%%%%%%%%%
+	
+	\def\k{0.9}
+	\def\l3{-0.8}		% left x coord for 3 elements
+	\def\r3{0.8}		% right x coord for 3 elements
+	\node (A) at (0,3*\k) {$f(u_1,\ldots,u_n)$};
+	\node[blockstyle] (B) at (0,0*\k) {$z = f(x_1,\ldots,x_n)$};
+	\node (C1) at (-1,-3*\k) {$u_1$};
+	\node (C2) at (-0.4,-3*\k) {$u_2$};
+	\node (Cdots) at (0.35,-2*\k) {$\cdots$};
+	\node (Cdots2) at (0.35,-3*\k) {$\cdots$};
+	\node (Cn) at (1,-3*\k) {$u_n$};
+	
+	\def\uy{3.5*\k}
+	\coordinate (U) at (0,\uy);
+	\coordinate (V) at (0,5*\k);
+	
+	\path[<-] (A) edge node {} (B);
+	\path[<-] (C1 |- B.south) edge node [right] {} (C1);
+	\path[<-] (C2 |- B.south) edge node [right] {} (C2);
+	\path[<-] (Cn |- B.south) edge node [right] {} (Cn);
+	
+	\draw (A) -- (U);
+	\draw (U)[dashed] -- (V);
+	
+	\node[align=left,blue,font=\LARGE] at (0,5.5) {Forward phase};
+	
+	%%%%%%%%%%%%%%
+	% Right figure
+	%%%%%%%%%%%%%%
+
+	\begin{scope}[xshift=135pt]
+		\node (A) at (0,3*\k) {$\cfrac{\partial L}{\partial z}(\bm q)$};
+		\node[blockstyle] (B) at (0,0*\k) {$z = f(x_1,\ldots,x_n)$};
+		\node (C1) at (-1,-3*\k) {$\cfrac{\partial L}{\partial x_1}(\bm q)$};
+		\node (Cdots) at (0,-2*\k) {$\cdots$};
+		\node (Cdots2) at (0,-3*\k) {$\cdots$};
+		\node (Cn) at (1,-3*\k) {$\cfrac{\partial L}{\partial x_n}(\bm q)$};
+		
+		\def\uy{3.75*\k}
+		\coordinate (U) at (0,\uy);
+		\coordinate (V) at (0,5*\k);
+		
+		\path[->] (A) edge node {} (B);
+		\path[->] (C1 |- B.south) edge node [right] {} (C1);
+		\path[->] (Cn |- B.south) edge node [right] {} (Cn);
+		
+		\draw (A) -- (U);
+		\draw (U)[dashed] -- (V);
+		
+		\node[align=left,blue,font=\LARGE] at (0,5.5) {Backward phase};
+	\end{scope}
+
+	\node[align=left,font=\large] at (2.3,-4.5) {Note:\\\;\;\;\;$\bm q=$ all the input sent to $L$};
+\end{tikzpicture}

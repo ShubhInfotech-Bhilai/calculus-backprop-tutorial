@@ -1,0 +1,87 @@
+\usetikzlibrary{shadings,shadows,shapes.arrows}
+
+\begin{tikzpicture}
+	\tikzstyle{blockstyle} = [draw,drop shadow,outer sep=3,inner sep=7,line width=1, thin, draw=black!55,
+							top color=white,bottom color=cyan,align=center]
+
+	\begin{scope}[scale=1.67,xshift=3,yshift=-24]
+		\node[blockstyle] (L) at (0,0) {$L$};
+		\node[blockstyle] (g) at (1,0) {$g$};
+		\node[blockstyle] (W1) at (2,0) {$W_1$};
+		\node[blockstyle] (h) at (3,0) {$h$};
+		\node[blockstyle] (k) at (4,0) {$k$};
+		\node[blockstyle] (b) at (0,-1) {$b$};
+		\node[blockstyle] (c) at (1,-1) {$c$};
+		\node[blockstyle] (W2) at (2,-1) {$W_2$};
+		\node[blockstyle] (j) at (3,-1) {$j$};
+		\node[blockstyle] (f) at (0,-2) {$f$};
+		\node[blockstyle] (e) at (1,-2) {$e$};
+		\node[blockstyle] (W3) at (2,-2) {$W_3$};
+		\node[blockstyle] (p) at (0,-3) {$p$};
+		
+		\draw[<-] (L) -- (g);
+		\draw[<-] (g) -- (W1);
+		\draw[->] (W1) -- (h);
+		\draw[->] (h) -- (k);
+		\draw[->] (b) -- (L);
+		\draw[<-] (b) -- (c);
+		\draw[<-] (c) -- (W2);
+		\draw[->] (W2) -- (j);
+		\draw[->] (j) -- (k);
+		\draw[->] (f) -- (b);
+		\draw[->] (p) -- (f);
+		\draw[->] (e) -- (c);
+		\draw[<-] (e) -- (W3);
+	\end{scope}
+	
+	\newcommand{\der}[2]{\frac{\partial #1}{\partial #2}}
+	\newcommand{\mytable}[1]{\mathrm{table}[#1]}
+	\newcommand{\ra}{\rightarrow}
+	\newcommand{\ind}{\;\;\;}
+
+	\def\labeltext{
+		\vspace{-\topsep}
+		\begin{itemize}[leftmargin=*]
+			\setlength\itemsep{1pt}
+			\item[] $\der{L}{W_1}\ra\mytable{W_1}$
+			\vspace{-\topsep}
+			\begin{itemize}
+				\item[] $\der{g}{W_1}$
+				\item[] $\der{L}{g}\ra\mytable{g}$
+			\end{itemize}
+			\item[] $\der{L}{W_2}\ra\mytable{W_2}$
+			\vspace{-\topsep}
+			\begin{itemize}
+				\item[] $\der{c}{W_2}$
+				\item[] $\der{L}{c}\ra\mytable{c}$
+				\begin{itemize}
+					\setlength\itemsep{5pt}
+					\item[] $\der{b}{c}$
+					\item[] $\der{L}{b}\ra\mytable{b}$
+				\end{itemize}
+			\end{itemize}
+			\item[] $\der{L}{W_3}\ra\mytable{W_3}$
+			\vspace{-\topsep}
+			\begin{itemize}
+				\item[] $\der{e}{W_3}$
+				\item[] $\der{L}{e}$
+				\begin{itemize}
+					\setlength\itemsep{5pt}
+					\item[] $\der{c}{e}$
+					\item[] $\der{L}{c}\leftarrow\mytable{c}$
+				\end{itemize}
+			\end{itemize}
+		\end{itemize}
+	}
+	\node[draw,align=left,font=\small,text width=11em,fill=white!60!green,rounded corners, inner ysep=10] at (9.6,-3) {\labeltext};
+	
+	\def\labeltext{
+	   In the code on the right:\\
+	   \begin{itemize}
+	   \item ``$A\ra B$'' means ``compute $A$ and store it in $B$'';\\
+	   \item ``$A\leftarrow B$'' means ``read $A$ from $B$''.
+	   \end{itemize}
+	}
+	\node[align=left,font=\small,text width=23em,inner sep=5] at (3.7,0) {\labeltext};
+
+\end{tikzpicture}

@@ -1,0 +1,3473 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage{tikz}
+\usetikzlibrary{shadings,shadows,shapes.arrows}
+
+\usepackage{bm}
+\usepackage{tabto}
+
+\setcounter{MaxMatrixCols}{20}   % for big matrices
+
+\usepackage[style=numeric,backend=biber]{biblatex}
+
+\usepackage{enumitem}
+
+\addbibresource{theano-full.bib}
+\addbibresource{tensorflow.bib}
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command biber
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_package amsmath 2
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Calculus and Backpropagation
+\end_layout
+
+\begin_layout Author
+Massimiliano Tomassoli
+\begin_inset Newline newline
+\end_inset
+
+(reverse(
+\emph on
+5102mnhuik
+\emph default
+)@gmail.com)
+\end_layout
+
+\begin_layout Date
+06/15/2016
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\path}{\mathrm{path}}
+{\mathrm{path}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Foreword
+\end_layout
+
+\begin_layout Standard
+A few weeks ago I posted a tutorial about 
+\emph on
+Calculus and Backpropagation
+\emph default
+ on 
+\emph on
+
+\begin_inset CommandInset href
+LatexCommand href
+name "/r/MachineLearning"
+target "https://www.reddit.com/r/MachineLearning"
+
+\end_inset
+
+
+\emph default
+ and 
+\begin_inset CommandInset href
+LatexCommand href
+name "/r/math"
+target "https://www.reddit.com/r/math"
+
+\end_inset
+
+.
+ Since then, I received several requests to rewrite it in 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+LaTeX
+\end_layout
+
+\end_inset
+
+.
+ I can't say I was thrilled at the prospect of having to relearn 
+\emph on
+TikZ
+\emph default
+ (I used 
+\emph on
+matplotlib
+\emph default
+ for my other papers), but I finally took the plunge and here we are.
+\end_layout
+
+\begin_layout Standard
+What follows is the 
+\emph on
+original
+\emph default
+ text with corrections and some additional clarifications.
+ As always, let me know if you find any mistakes or if you have any suggestions.
+\end_layout
+
+\begin_layout Standard
+Since I don't have any 
+\emph on
+space limitations
+\emph default
+ and I suspect—but maybe I'm wrong—that many of you are going to read this
+ tutorial in digital form, I decided that the convenience of having all
+ the pictures in the right place should have the priority over space saving
+ considerations.
+ You're free to try to change my mind on this (and any other) matter: I
+ just try to do what seems to work best.
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:What-to-expect"
+
+\end_inset
+
+What to expect
+\end_layout
+
+\begin_layout Standard
+This started out as an answer to a question that was asked on this forum,
+ but I got carried away and wrote a full-fledged tutorial! It took me 10+
+ hours to complete it, so I hope you'll find it useful.
+ In particular, I hope it'll help beginners understand Backprop once and
+ for all.
+\end_layout
+
+\begin_layout Standard
+I should warn you that I don't believe that giving specific and ad hoc derivatio
+ns of the backprop is any useful in the long run.
+ Many popular tutorials and books choose this approach, which, I think,
+ isn't helping.
+ I strongly believe that 
+\emph on
+abstraction
+\emph default
+ and 
+\emph on
+modularization
+\emph default
+ are the right way to explain things, when possible.
+\end_layout
+
+\begin_layout Standard
+If you took some calculus course, but you didn't develop an intuition for
+ it, maybe this short tutorial is what you need.
+\end_layout
+
+\begin_layout Section
+Starting from the start
+\end_layout
+
+\begin_layout Standard
+For simplicity, we'll assume that our functions are 
+\emph on
+differentiable
+\emph default
+ at any point of their domain and that every scalar is a real number.
+\end_layout
+
+\begin_layout Standard
+Let's say we have an 
+\begin_inset Formula $R\to R$
+\end_inset
+
+ function 
+\begin_inset Formula $h(x)$
+\end_inset
+
+.
+ Let's focus on a particular 
+\begin_inset Formula $x$
+\end_inset
+
+ and consider the portion of 
+\begin_inset Formula $h$
+\end_inset
+
+ around 
+\begin_inset Formula $x$
+\end_inset
+
+, i.e.
+ 
+\begin_inset Formula $h$
+\end_inset
+
+ restricted to the interval 
+\begin_inset Formula $[x-dx,x+dx]$
+\end_inset
+
+.
+ Let's call it 
+\begin_inset Formula $h\{x,dx\}$
+\end_inset
+
+.
+ If 
+\begin_inset Formula $dx$
+\end_inset
+
+ is big, 
+\begin_inset Formula $h\{x,dx\}$
+\end_inset
+
+ may have some curvature, but if we reduce 
+\begin_inset Formula $dx$
+\end_inset
+
+ more and more, 
+\begin_inset Formula $h\{x,dx\}$
+\end_inset
+
+ will become flatter and flatter.
+\end_layout
+
+\begin_layout Standard
+The main idea of 
+\emph on
+derivatives
+\emph default
+ is that if 
+\begin_inset Formula $dx$
+\end_inset
+
+ is infinitesimally small (but not zero), then 
+\begin_inset Formula $h\{x,dx\}$
+\end_inset
+
+ is linear, that is, 
+\begin_inset Formula $h$
+\end_inset
+
+ is linear in 
+\begin_inset Formula $[x-dx,x+dx]$
+\end_inset
+
+.
+ If 
+\begin_inset Formula $h$
+\end_inset
+
+ is linear in that interval, then we must have 
+\begin_inset Formula $h(x+dx)=h(x)+cdx$
+\end_inset
+
+, for some 
+\begin_inset Formula $c$
+\end_inset
+
+.
+ In other words, if 
+\begin_inset Formula $dx>0$
+\end_inset
+
+ and 
+\begin_inset Formula $c>0$
+\end_inset
+
+, we start from 
+\begin_inset Formula $(x,h(x))$
+\end_inset
+
+ and when we move to the right by 
+\begin_inset Formula $dx$
+\end_inset
+
+ we go up by 
+\begin_inset Formula $cdx$
+\end_inset
+
+, for some 
+\begin_inset Formula $c$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+It turns out that the slope 
+\begin_inset Formula $c$
+\end_inset
+
+ of the linear curve is 
+\begin_inset Formula $h'(x)$
+\end_inset
+
+, also written as 
+\begin_inset Formula $\frac{dh}{dx}(x)$
+\end_inset
+
+, which is called 
+\emph on
+the derivative of 
+\begin_inset Formula $h$
+\end_inset
+
+ at 
+\begin_inset Formula $x$
+\end_inset
+
+
+\emph default
+.
+ This makes sense; in fact, if we call 
+\begin_inset Formula $dh$
+\end_inset
+
+ the change in 
+\begin_inset Formula $h$
+\end_inset
+
+, we have
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Note that I often write 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $=$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+ instead of 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $\approx$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+ (i.e.
+ 
+\begin_inset Quotes eld
+\end_inset
+
+
+\emph on
+is approximately equal to
+\emph default
+
+\begin_inset Quotes erd
+\end_inset
+
+), for convenience.
+\end_layout
+
+\end_inset
+
+:
+\begin_inset Formula 
+\begin{alignat*}{2}
+h(x+dx) & =h(x)+h'(x)dx & \implies\\
+h(x+dx)-h(x) & =h'(x)dx & \implies\\
+dh & =h'(x)dx & \implies\\
+\frac{dh}{dx} & =\frac{dh}{dx}(x)=h'(x).
+\end{alignat*}
+
+\end_inset
+
+Should we write just 
+\begin_inset Formula $\frac{dh}{dx}$
+\end_inset
+
+ or 
+\begin_inset Formula $\frac{dh}{dx}(x)$
+\end_inset
+
+ to indicate that the derivative is evaluated at the point 
+\begin_inset Formula $x$
+\end_inset
+
+? You'll get an answer in section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:A-note-about-notation"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Note that by rewriting 
+\begin_inset Formula $h(x+dx)-h(x)$
+\end_inset
+
+ as 
+\begin_inset Formula $dh$
+\end_inset
+
+ we lose some information: 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $dx$
+\end_inset
+
+.
+ To make things rigorous, we should say that 
+\begin_inset Formula $dh$
+\end_inset
+
+ is really a function of 
+\begin_inset Formula $dx$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+dh(x;dx)=h'(x)dx.
+\]
+
+\end_inset
+
+
+\begin_inset Formula $dh(x;dx)$
+\end_inset
+
+ is 
+\emph on
+the differential of 
+\begin_inset Formula $h$
+\end_inset
+
+ at 
+\begin_inset Formula $x$
+\end_inset
+
+
+\emph default
+ and can be seen as the 
+\emph on
+best linear approximation
+\emph default
+ to 
+\begin_inset Formula $h(x+dx)-h(x)$
+\end_inset
+
+ at the point 
+\begin_inset Formula $x$
+\end_inset
+
+.
+ Again, note that 
+\begin_inset Formula $dh(x;dx)$
+\end_inset
+
+ and 
+\begin_inset Formula $h(x+dx)-h(x)$
+\end_inset
+
+ are seen as functions of 
+\begin_inset Formula $dx$
+\end_inset
+
+ and not of 
+\begin_inset Formula $x$
+\end_inset
+
+, which can be seen as a fixed parameter in this context.
+\end_layout
+
+\begin_layout Standard
+We may say that 
+\begin_inset Formula $dh(x;dx)$
+\end_inset
+
+ is that function such that
+\begin_inset Formula 
+\[
+\lim_{dx\to0}\frac{h(x+dx)-h(x)-dh(x;dx)}{dx}=0,
+\]
+
+\end_inset
+
+also written as
+\begin_inset Formula 
+\[
+h(x+dx)-h(x)-dh(x;dx)=o(dx).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The derivative of 
+\begin_inset Formula $h$
+\end_inset
+
+ at 
+\begin_inset Formula $x$
+\end_inset
+
+ is just 
+\begin_inset Formula $\frac{dh(x;dx)}{dx}$
+\end_inset
+
+ (note that this is a 
+\emph on
+real
+\emph default
+ fraction!), which is the slope of the linear approximation 
+\begin_inset Formula $dh$
+\end_inset
+
+.
+ But we are 
+\emph on
+applied mathematicians
+\emph default
+ so we just write 
+\begin_inset Formula $dh$
+\end_inset
+
+ and we don't care about what 
+\emph on
+pure mathematicians
+\emph default
+ say.
+\end_layout
+
+\begin_layout Section
+Chain rule
+\end_layout
+
+\begin_layout Standard
+Let's consider 
+\begin_inset Formula $h(x)=g(f(x))$
+\end_inset
+
+ at the point 
+\begin_inset Formula $t$
+\end_inset
+
+.
+ What's the change in 
+\begin_inset Formula $h$
+\end_inset
+
+ if we move from 
+\begin_inset Formula $t$
+\end_inset
+
+ to 
+\begin_inset Formula $t+dx$
+\end_inset
+
+? To answer that, we need to start with 
+\begin_inset Formula $f$
+\end_inset
+
+.
+ So what's the change in 
+\begin_inset Formula $f$
+\end_inset
+
+ if we move from 
+\begin_inset Formula $t$
+\end_inset
+
+ to 
+\begin_inset Formula $t+dx$
+\end_inset
+
+? That's
+\begin_inset Formula 
+\begin{equation}
+df=f'(t)dx.\label{eq:df=f'(t)dx}
+\end{equation}
+
+\end_inset
+
+So 
+\begin_inset Formula $f$
+\end_inset
+
+ changes by 
+\begin_inset Formula $df$
+\end_inset
+
+.
+ Now note that if 
+\begin_inset Formula $f$
+\end_inset
+
+ is at 
+\begin_inset Formula $t$
+\end_inset
+
+, then 
+\begin_inset Formula $g$
+\end_inset
+
+ is at 
+\begin_inset Formula $f(t)$
+\end_inset
+
+, so what's the change in 
+\begin_inset Formula $g$
+\end_inset
+
+ from 
+\begin_inset Formula $f(t)$
+\end_inset
+
+ to 
+\begin_inset Formula $f(t)+df$
+\end_inset
+
+? That's
+\begin_inset Formula 
+\begin{equation}
+dg=g'(f(t))df.\label{eq:dg=g'(f(t))df}
+\end{equation}
+
+\end_inset
+
+Therefore, if we change 
+\begin_inset Formula $x$
+\end_inset
+
+ by 
+\begin_inset Formula $dx$
+\end_inset
+
+, 
+\begin_inset Formula $f$
+\end_inset
+
+ changes by 
+\begin_inset Formula $df$
+\end_inset
+
+ and, as a consequence, 
+\begin_inset Formula $g$
+\end_inset
+
+ changes by 
+\begin_inset Formula $dg$
+\end_inset
+
+.
+ From equalities 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:df=f'(t)dx"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:dg=g'(f(t))df"
+
+\end_inset
+
+, we get
+\begin_inset Formula 
+\begin{alignat*}{2}
+dg & =g'(f(t))df=g'(f(t))f'(t)dx & \hspace{1em}\implies\\
+h'(t) & =\frac{dg}{dx}=g'(f(t))f'(t).
+\end{alignat*}
+
+\end_inset
+
+That's the 
+\emph on
+chain rule
+\emph default
+.
+ Note that we rewrote 
+\begin_inset Formula $\frac{dg}{dx}$
+\end_inset
+
+ as 
+\begin_inset Formula $h'(t)$
+\end_inset
+
+ and not 
+\begin_inset Formula $g'(t)$
+\end_inset
+
+.
+ To understand why, keep reading.
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:A-note-about-notation"
+
+\end_inset
+
+A note about 
+\emph on
+notation
+\end_layout
+
+\begin_layout Standard
+In the chain rule we wrote that 
+\begin_inset Formula $h'(t)=\frac{dg}{dx}$
+\end_inset
+
+.
+ Why not 
+\begin_inset Formula $h'(t)=\frac{dh}{dx}$
+\end_inset
+
+ or maybe 
+\begin_inset Formula $g'(t)=\frac{dg}{dx}$
+\end_inset
+
+?
+\end_layout
+
+\begin_layout Standard
+In 
+\emph on
+real analysis
+\emph default
+, one says that 
+\begin_inset Formula $h(x)=g(f(x))$
+\end_inset
+
+ and that the 
+\emph on
+derivative
+\emph default
+ of 
+\begin_inset Formula $h$
+\end_inset
+
+ at 
+\begin_inset Formula $t$
+\end_inset
+
+ with respect to 
+\begin_inset Formula $x$
+\end_inset
+
+ is
+\begin_inset Formula 
+\[
+h'(t)=g'(f(t))f'(t)
+\]
+
+\end_inset
+
+where I chose to write 
+\begin_inset Formula $t$
+\end_inset
+
+ instead of 
+\begin_inset Formula $x$
+\end_inset
+
+ to emphasize that 
+\begin_inset Formula $x$
+\end_inset
+
+ is the name of the variable whereas 
+\begin_inset Formula $t$
+\end_inset
+
+ is the point where we calculate the derivative, but usually one just writes
+\begin_inset Formula 
+\[
+h'(x)=g'(f(x))f'(x).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+On the other hand, 
+\emph on
+applied
+\emph default
+ mathematicians, who love their 
+\begin_inset Formula $\frac{df}{dx}$
+\end_inset
+
+ notation (called 
+\emph on
+Leibniz notation
+\emph default
+) usually give variables and functions the same name.
+ For instance, they write
+\begin_inset Formula 
+\begin{align}
+f & =f(x)\label{eq:f=f(x)}\\
+g & =g(f).\label{eq:g=g(f)}
+\end{align}
+
+\end_inset
+
+The idea is that 
+\begin_inset Formula $f$
+\end_inset
+
+ is both a 
+\emph on
+variable
+\emph default
+ which depends on 
+\begin_inset Formula $x$
+\end_inset
+
+ and the 
+\emph on
+function
+\emph default
+ which expresses the mapping between the variables 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $f$
+\end_inset
+
+.
+ Note that the 
+\begin_inset Formula $f$
+\end_inset
+
+ in equality
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:g=g(f)"
+
+\end_inset
+
+ is the 
+\emph on
+variable
+\emph default
+ 
+\begin_inset Formula $f$
+\end_inset
+
+.
+ Do you see how expressions 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:f=f(x)"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:g=g(f)"
+
+\end_inset
+
+ are similar to each other while in the pure math notation they're different
+ because 
+\begin_inset Formula $f$
+\end_inset
+
+ is a function?
+\end_layout
+
+\begin_layout Standard
+This allows us to write
+\begin_inset Formula 
+\[
+\frac{dg}{dx}=\frac{dg}{df}\frac{df}{dx}
+\]
+
+\end_inset
+
+where it's 
+\series bold
+\emph on
+as if
+\series default
+\emph default
+ the term 
+\begin_inset Formula $df$
+\end_inset
+
+ canceled out when multiplying two fractions (strong emphasis on 
+\series bold
+\emph on
+as if
+\series default
+\emph default
+!).
+\end_layout
+
+\begin_layout Standard
+Some authors even mix the two notations.
+ I'll indicate the points at which the derivatives are evaluated but applied
+ mathematicians usually do not because those points are implicit in the
+ way the variables are defined.
+ If 
+\begin_inset Formula $x=t$
+\end_inset
+
+, 
+\begin_inset Formula $f=f(x)$
+\end_inset
+
+ and 
+\begin_inset Formula $g=g(f)$
+\end_inset
+
+, then it must be the case that, for instance, 
+\begin_inset Formula $\frac{dg}{df}$
+\end_inset
+
+ is
+\begin_inset Formula 
+\[
+g'(f)=g'(f(x))=g'(f(t)).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+I encourage you to become 
+\emph on
+flexible 
+\emph default
+and be able to handle any notation you come across.
+ I hope this little aside clarified things instead of making them more confusing.
+\end_layout
+
+\begin_layout Section
+Chain rule in 
+\begin_inset Formula $\mathbb{R}^{n}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If we are in 
+\begin_inset Formula $\mathbb{R}^{n}$
+\end_inset
+
+, things get more complicated, but not by much.
+ Let's say we have
+\begin_inset Formula 
+\[
+h(x_{1},x_{2})=g(f_{1}(x_{1},x_{2}),f_{2}(x_{1},x_{2}))
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $h,g,f_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $f_{2}$
+\end_inset
+
+ take 
+\emph on
+two
+\emph default
+ values and return 
+\emph on
+one
+\emph default
+ value, i.e.
+ they are 
+\begin_inset Formula $\mathbb{R}^{2}\to\mathbb{R}$
+\end_inset
+
+ functions.
+ If we define 
+\begin_inset Formula $f$
+\end_inset
+
+ as an 
+\begin_inset Formula $\mathbb{R}^{2}\to\mathbb{R}^{2}$
+\end_inset
+
+ function which takes two values 
+\begin_inset Formula $x_{1},x_{2}$
+\end_inset
+
+ and returns two values 
+\begin_inset Formula $f_{1}(x_{1},x_{2}),f_{2}(x_{1},x_{2})$
+\end_inset
+
+, then we can write:
+\begin_inset Formula 
+\[
+h(x_{1},x_{2})=g(\boldsymbol{f}(x_{1},x_{2})).
+\]
+
+\end_inset
+
+As you can see, vectors (
+\begin_inset Formula $\boldsymbol{f}$
+\end_inset
+
+ is a 
+\emph on
+vector function
+\emph default
+) are typeset in 
+\series bold
+lowercase bold
+\series default
+.
+ If we now define 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ as 
+\begin_inset Formula $(x_{1},x_{2})$
+\end_inset
+
+, we can write:
+\begin_inset Formula 
+\[
+h(\boldsymbol{x})=g(\boldsymbol{f}(\boldsymbol{x})).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now we have 
+\emph on
+partial derivatives
+\emph default
+ 
+\begin_inset Formula $\frac{\partial\boldsymbol{f}}{\partial x_{1}},\frac{\partial\boldsymbol{f}}{\partial x_{2}}$
+\end_inset
+
+, etc., but the idea is the same.
+ We use 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $\partial$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+ for partial derivatives and 
+\begin_inset Quotes eld
+\end_inset
+
+
+\begin_inset Formula $d$
+\end_inset
+
+
+\begin_inset Quotes erd
+\end_inset
+
+ for derivatives, but they're conceptually equivalent.
+ If we change 
+\begin_inset Formula $x_{1}$
+\end_inset
+
+ then 
+\series bold
+
+\begin_inset Formula $\boldsymbol{f}$
+\end_inset
+
+
+\series default
+ changes and so 
+\begin_inset Formula $g$
+\end_inset
+
+ changes as well.
+ Let's say we are at 
+\begin_inset Formula $\boldsymbol{x}=(t,u)$
+\end_inset
+
+ and we change 
+\begin_inset Formula $x_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $x_{2}$
+\end_inset
+
+ by 
+\begin_inset Formula $\partial x_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $\partial x_{2}$
+\end_inset
+
+, respectively.
+ Analogously to before, we get:
+\begin_inset Formula 
+\[
+\partial\boldsymbol{f}=\boldsymbol{f}_{x_{1}}(t,u)\partial x_{1}
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\boldsymbol{f}_{x_{1}}(t,u)$
+\end_inset
+
+ is the partial derivative at 
+\begin_inset Formula $(t,u)$
+\end_inset
+
+ of 
+\begin_inset Formula $\boldsymbol{f}$
+\end_inset
+
+ with respect to 
+\begin_inset Formula $x_{1}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+In general, the partial derivative of a function with respect to a particular
+ variable 
+\begin_inset Formula $z$
+\end_inset
+
+ is just the derivative of that function with respect to 
+\begin_inset Formula $z$
+\end_inset
+
+ pretending that the other variables are constant (say some fixed parameters).
+ In other words, the partial derivative tells us by how much the function
+ changes if we 
+\emph on
+change one particular variable and keep all the other variables fixed
+\emph default
+.
+ For instance,
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial(5x^{2}-xy^{2})}{\partial x} & =10x-y^{2} &  & y^{2}\text{ is just a constant, like }5\\
+\frac{\partial(5x^{2}-xy^{2})}{\partial y} & =-2xy &  & \text{now \ensuremath{x} is just a constant}.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let's get back to 
+\begin_inset Formula $h(\boldsymbol{x})=g(\boldsymbol{f}(\boldsymbol{x}))$
+\end_inset
+
+ and remember that that's equivalent to
+\begin_inset Formula 
+\[
+h(x_{1},x_{2})=g(f_{1}(x_{1},x_{2}),f_{2}(x_{1},x_{2})).
+\]
+
+\end_inset
+
+A graph will help us see what changes what:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph1.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+As we can see, 
+\begin_inset Formula $x_{1}$
+\end_inset
+
+ changes both 
+\begin_inset Formula $f_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $f_{2}$
+\end_inset
+
+ which both change 
+\begin_inset Formula $g$
+\end_inset
+
+.
+ Since the changes are linear, they just add up.
+ Basically, changing 
+\begin_inset Formula $g$
+\end_inset
+
+ by simultaneously changing 
+\begin_inset Formula $f_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $f_{2}$
+\end_inset
+
+, is like changing 
+\begin_inset Formula $g$
+\end_inset
+
+ by first changing 
+\begin_inset Formula $f_{1}$
+\end_inset
+
+ and then changing 
+\begin_inset Formula $f_{2}$
+\end_inset
+
+ (or first 
+\begin_inset Formula $f_{2}$
+\end_inset
+
+ and then 
+\begin_inset Formula $f_{1}$
+\end_inset
+
+).
+ It's like saying that if you are at 
+\begin_inset Formula $(0,0)$
+\end_inset
+
+ and you want to reach 
+\begin_inset Formula $(3,4)$
+\end_inset
+
+ it doesn't matter if you first go to 
+\begin_inset Formula $(3,0)$
+\end_inset
+
+ or 
+\begin_inset Formula $(0,4)$
+\end_inset
+
+.
+ The order doesn't matter and, moreover, the total change is just the sum
+ of the individual changes.
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $y_{1},y_{2}$
+\end_inset
+
+ be the variables of 
+\begin_inset Formula $g$
+\end_inset
+
+ and let's compute 
+\begin_inset Formula $\frac{\partial h}{\partial x_{1}}(u,t)$
+\end_inset
+
+, i.e.
+ how much 
+\begin_inset Formula $h$
+\end_inset
+
+ changes if we change 
+\begin_inset Formula $x_{1}$
+\end_inset
+
+ when we are at 
+\begin_inset Formula $(u,t)$
+\end_inset
+
+:
+\begin_inset Formula 
+\begin{align*}
+\partial f_{1} & =(f_{1}){}_{x_{1}}(u,t)\partial x_{1}\\
+\partial f_{2} & =(f_{2}){}_{x_{1}}(u,t)\partial x_{1}\\
+\partial h & =g_{y_{1}}(f_{1}(u,t),f_{2}(u,t))\partial f_{1}+\\
+ & \phantom{=\;\;}g_{y_{2}}(f_{1}(u,t),f_{2}(u,t))\partial f_{2}.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As we can see, 
+\begin_inset Formula $x_{1}$
+\end_inset
+
+ modifies 
+\begin_inset Formula $f_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $f_{2}$
+\end_inset
+
+ which, together, modify 
+\begin_inset Formula $g$
+\end_inset
+
+.
+ Always note at which points the derivatives are calculated!
+\end_layout
+
+\begin_layout Standard
+To get 
+\begin_inset Formula $\frac{\partial h}{\partial x_{1}}$
+\end_inset
+
+ we must substitute:
+\begin_inset Formula 
+\begin{align*}
+\partial h & =g_{y_{1}}(f_{1}(u,t),f_{2}(u,t))\partial f_{1}+\\
+ & \phantom{=\;\;}g_{y_{2}}(f_{1}(u,t),f_{2}(u,t))\partial f_{2}\\
+ & =g_{y_{1}}(f_{1}(u,t),f_{2}(u,t))(f_{1}){}_{x_{1}}(u,t)\partial x_{1}+\\
+ & \phantom{=\;\;}g_{y_{2}}(f_{1}(u,t),f_{2}(u,t))(f_{2}){}_{x_{1}}(u,t)\partial x_{1}\\
+ & =[g_{y_{1}}(f_{1}(u,t),f_{2}(u,t))(f_{1}){}_{x_{1}}(u,t)+\\
+ & \phantom{=\;\;}g_{y_{2}}(f_{1}(u,t),f_{2}(u,t))(f_{2}){}_{x_{1}}(u,t)]\partial x_{1}.
+\end{align*}
+
+\end_inset
+
+Therefore:
+\begin_inset Formula 
+\begin{align*}
+h_{x_{1}}(u,t)=\frac{\partial h}{\partial x_{1}} & =g_{y_{1}}(f_{1}(u,t),f_{2}(u,t))(f_{1}){}_{x_{1}}(u,t)+\\
+ & \phantom{=\;\;}g_{y_{2}}(f_{1}(u,t),f_{2}(u,t))(f_{2}){}_{x_{1}}(u,t).
+\end{align*}
+
+\end_inset
+
+We can also rewrite this more compactly:
+\begin_inset Formula 
+\[
+\frac{\partial g}{\partial x_{1}}=\frac{\partial g}{\partial f_{1}}\frac{\partial f_{1}}{\partial x_{1}}+\frac{\partial g}{\partial f_{2}}\frac{\partial f_{2}}{\partial x_{1}},
+\]
+
+\end_inset
+
+where we assumed the following definitions (see section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:A-note-about-notation"
+
+\end_inset
+
+):
+\begin_inset Formula 
+\begin{align*}
+(x_{1},x_{2}) & =(u,t)\\
+f_{1} & =f_{1}(x_{1},x_{2})\\
+f_{2} & =f_{2}(x_{1},x_{2})\\
+g & =g(f_{1},f_{2}).
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As I said before, I'm throwing at you different notations on purpose so
+ that you'll get familiar with them as soon as possible, if you're not already.
+\end_layout
+
+\begin_layout Section
+Why backprop?
+\end_layout
+
+\begin_layout Standard
+Now let's consider the following graph:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Preview
+
+\begin_layout Standard
+\align center
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph2.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\noindent
+We want to compute 
+\begin_inset Formula $\frac{de}{da}$
+\end_inset
+
+.
+ Note that we don't write 
+\begin_inset Formula $\frac{\partial e}{\partial a}$
+\end_inset
+
+.
+ That's because 
+\begin_inset Formula $e$
+\end_inset
+
+ can be seen as a function of the only 
+\begin_inset Formula $a$
+\end_inset
+
+, thus we write 
+\begin_inset Formula $\frac{de}{da}$
+\end_inset
+
+ like we did in the 
+\emph on
+1D case
+\emph default
+ (in a way, we 
+\emph on
+are
+\emph default
+ in the 1D case).
+ However, note that 
+\begin_inset Formula $e$
+\end_inset
+
+ is defined as a function which takes two values.
+ It's the composition represented by the entire graph that's a function
+ of the only 
+\begin_inset Formula $a$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We can see that there are 4 paths from 
+\begin_inset Formula $a$
+\end_inset
+
+ to 
+\begin_inset Formula $e$
+\end_inset
+
+, so 
+\begin_inset Formula $a$
+\end_inset
+
+ influences 
+\begin_inset Formula $e$
+\end_inset
+
+ in 4 ways and we have:
+\begin_inset Formula 
+\begin{align*}
+\frac{de}{da} & =\path[a,b_{1},c,d_{1},e]+\\
+ & \phantom{=\;\;}\path[a,b_{1},c,d_{2},e]+\\
+ & \phantom{=\;\;}\path[a,b_{2},c,d_{1},e]+\\
+ & \phantom{=\;\;}\path[a,b_{2},c,d_{2},e]\\
+ & =\frac{db_{1}}{da}\frac{\partial c}{\partial b_{1}}\frac{dd_{1}}{dc}\frac{\partial e}{\partial d_{1}}+\\
+ & \phantom{=\;\;}\frac{db_{1}}{da}\frac{\partial c}{\partial b_{1}}\frac{dd_{2}}{dc}\frac{\partial e}{\partial d_{2}}+\\
+ & \phantom{=\;\;}\frac{db_{2}}{da}\frac{\partial c}{\partial b_{2}}\frac{dd_{1}}{dc}\frac{\partial e}{\partial d_{1}}+\\
+ & \phantom{=\;\;}\frac{db_{2}}{da}\frac{\partial c}{\partial b_{2}}\frac{dd_{2}}{dc}\frac{\partial e}{\partial d_{2}}.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that we sum paths and multiply along the paths.
+ Let's examine one path:
+\begin_inset Formula 
+\[
+\frac{db_{1}}{da}\frac{\partial c}{\partial b_{1}}\frac{dd_{1}}{dc}\frac{\partial e}{\partial d_{1}}.
+\]
+
+\end_inset
+
+This means that we change 
+\begin_inset Formula $a$
+\end_inset
+
+ so we change 
+\begin_inset Formula $b_{1}$
+\end_inset
+
+, so we change 
+\begin_inset Formula $c$
+\end_inset
+
+, so we change 
+\begin_inset Formula $d_{1}$
+\end_inset
+
+, and so we change 
+\begin_inset Formula $e$
+\end_inset
+
+.
+ Note that the number of paths is 
+\emph on
+exponential
+\emph default
+ with respect to the length of the path.
+ Every time we add a bifurcation the total number of paths 
+\emph on
+doubles
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+Computing the partial changes along the single paths is a waste of time
+ because many computations are repeated.
+ Let's simplify things.
+ Here's the stupid way again:
+\begin_inset Formula 
+\begin{align*}
+\frac{de}{da} & =\path[a,b_{1},c,d_{1},e]+\\
+ & \phantom{=\;\;}\path[a,b_{1},c,d_{2},e]+\\
+ & \phantom{=\;\;}\path[a,b_{2},c,d_{1},e]+\\
+ & \phantom{=\;\;}\path[a,b_{2},c,d_{2},e].
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that, in general,
+\begin_inset Formula 
+\[
+\path[a,\ldots,b,\ldots,c]=\path[a,\ldots,b]\path[b,\ldots,c],
+\]
+
+\end_inset
+
+that is, we can split paths into two or more subpaths.
+ For instance,
+\begin_inset Formula 
+\begin{align*}
+\path[a,b_{1},c,d_{1},e] & =\frac{db_{1}}{da}\frac{\partial c}{\partial b_{1}}\frac{dd_{1}}{dc}\frac{\partial e}{\partial d_{1}}\\
+ & =\left(\frac{db_{1}}{da}\frac{\partial c}{\partial b_{1}}\right)\left(\frac{dd_{1}}{dc}\frac{\partial e}{\partial d_{1}}\right)\\
+ & =\path[a,b_{1},c]\path[c,d_{1},e].
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This readily suggests a smarter way to compute 
+\begin_inset Formula $\frac{de}{da}$
+\end_inset
+
+:
+\begin_inset Formula 
+\begin{align*}
+\frac{de}{da} & =(\path[a,b_{1},c]+\path[a,b_{2},c])(\path[c,d_{1},e]+\path[c,d_{2},e])\\
+ & =\left(\frac{db_{1}}{da}\frac{\partial c}{\partial b_{1}}+\frac{db_{2}}{da}\frac{\partial c}{\partial b_{2}}\right)\left(\frac{dd_{1}}{dc}\frac{\partial e}{\partial d_{1}}+\frac{dd_{2}}{dc}\frac{\partial e}{\partial d_{2}}\right).
+\end{align*}
+
+\end_inset
+
+Note that this is just
+\begin_inset Formula 
+\[
+\frac{de}{da}=\frac{dc}{da}\frac{de}{dc}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Backprop in action
+\end_layout
+
+\begin_layout Standard
+Let's consider the same graph again:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\align center
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph2.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We want to evaluate 
+\begin_inset Formula $\frac{de}{da}$
+\end_inset
+
+ at 
+\begin_inset Formula $a=3$
+\end_inset
+
+.
+ During the forward phase, we compute the values of the variables (defined
+ through functions which we omitted for more clarity):
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "graph3.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Just to clarify, every variable in the graph depends directly on the variable(s)
+ just below.
+ For instance, 
+\begin_inset Formula $c$
+\end_inset
+
+ depends on 
+\begin_inset Formula $b_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $b_{2}$
+\end_inset
+
+, while 
+\begin_inset Formula $b_{1}$
+\end_inset
+
+ depends on 
+\begin_inset Formula $a$
+\end_inset
+
+.
+ In other words, there are some functions 
+\begin_inset Formula $f$
+\end_inset
+
+ and 
+\begin_inset Formula $g$
+\end_inset
+
+ such that
+\begin_inset Formula 
+\begin{align*}
+c & =f(b_{1},b_{2})\\
+b_{1} & =g(a).
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We want to compute 
+\begin_inset Formula $\frac{de}{da}(3)$
+\end_inset
+
+ so we let 
+\begin_inset Formula $a=3$
+\end_inset
+
+.
+ Now we must compute the values of all the other variables going up.
+ I just put some arbitrary numbers in the graph to make things more concrete.
+\end_layout
+
+\begin_layout Standard
+Now we perform the 
+\emph on
+backward phase
+\emph default
+ which is usually called 
+\emph on
+backprop
+\emph default
+, short for 
+\emph on
+backward propagation
+\emph default
+:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "graph4.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let's examine block 
+\begin_inset Formula $d_{1}$
+\end_inset
+
+ in detail:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+filename "graph5.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+During backprop, 
+\begin_inset Formula $d_{1}$
+\end_inset
+
+ receives 
+\begin_inset Formula $\frac{\partial e}{\partial d1}(-1,2)$
+\end_inset
+
+ in input and outputs 
+\begin_inset Formula $\frac{de}{dc}(4)$
+\end_inset
+
+.
+ Here's how 
+\begin_inset Formula $d_{1}$
+\end_inset
+
+ does it:
+\begin_inset Formula 
+\[
+\frac{de}{dc}(4)=\frac{\partial e}{\partial d_{1}}(-1,2)\frac{dd_{1}}{dc}(4).
+\]
+
+\end_inset
+
+
+\series bold
+Note:
+\series default
+ in the expression above we're only considering the 
+\begin_inset Formula $\frac{de}{dc}(4)$
+\end_inset
+
+ coming from the left path (i.e.
+ 
+\begin_inset Formula $c\leftarrow d_{1}\leftarrow e$
+\end_inset
+
+), but in reality we should sum both the 
+\begin_inset Formula $\frac{de}{dc}(4)$
+\end_inset
+
+ to get the 
+\emph on
+
+\begin_inset Quotes eld
+\end_inset
+
+total
+\begin_inset Quotes erd
+\end_inset
+
+
+\emph default
+ 
+\begin_inset Formula $\frac{de}{dc}(4)$
+\end_inset
+
+.
+ Unfortunately, I don't know how to make my notation more clear without
+ coming up with some weird convention.
+\end_layout
+
+\begin_layout Standard
+There's an important point to be made.
+ We can write 
+\begin_inset Formula $\frac{\partial e}{\partial d_{1}}(-1,2)$
+\end_inset
+
+ because 
+\begin_inset Formula $e$
+\end_inset
+
+ can be seen as a function of 
+\begin_inset Formula $d_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $d_{2}$
+\end_inset
+
+ alone.
+ 
+\begin_inset Formula $\frac{de}{dc}(4)$
+\end_inset
+
+ is also correct because 
+\begin_inset Formula $e$
+\end_inset
+
+ can also be seen as a function of 
+\begin_inset Formula $c$
+\end_inset
+
+.
+ We can't write 
+\begin_inset Formula $\frac{\partial e}{\partial d_{1}}(-1)$
+\end_inset
+
+ because 
+\begin_inset Formula $e$
+\end_inset
+
+ depends not only on 
+\begin_inset Formula $d_{1}$
+\end_inset
+
+ but also on 
+\begin_inset Formula $d_{2}$
+\end_inset
+
+.
+ I'll explain this better in the next section.
+\end_layout
+
+\begin_layout Standard
+It goes without saying—but I'm saying it anyway—that we're focusing on a
+ single block because once we know how the forward/backward propagation
+ works with respect to a single block, then we know how it works with respect
+ to the entire graph.
+ This is the 
+\emph on
+modularization
+\emph default
+ I was talking about in section
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:What-to-expect"
+
+\end_inset
+
+ at the beginning.
+ Libraries such as 
+\emph on
+Tensorflow
+\emph default
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "tensorflow2015-whitepaper"
+
+\end_inset
+
+ and 
+\emph on
+Theano
+\emph default
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "2016arXiv160502688full"
+
+\end_inset
+
+ are based on this very modularization so it's important that you understand
+ it very well.
+\end_layout
+
+\begin_layout Section
+Backprop with blocks
+\end_layout
+
+\begin_layout Standard
+Let's consider a more general case, now:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph6.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We are the block 
+\begin_inset Formula $z$
+\end_inset
+
+ depicted above and we want to compute gradients/derivati-ves of the loss
+ function 
+\begin_inset Formula $L$
+\end_inset
+
+ with respect to our inputs 
+\begin_inset Formula $x$
+\end_inset
+
+, 
+\begin_inset Formula $y$
+\end_inset
+
+ and 
+\begin_inset Formula $W$
+\end_inset
+
+ (they're inputs in the forward phase).
+ In particular, 
+\begin_inset Formula $W$
+\end_inset
+
+ is our parameter, but we can see it as a normal input.
+ There's nothing special about it, except for the fact that it isn't computed
+ from other values.
+\end_layout
+
+\begin_layout Standard
+Note that the three 
+\begin_inset Formula $z_{0}$
+\end_inset
+
+ on the left are all equal, but the three 
+\begin_inset Formula $\frac{\partial L}{\partial z}(\boldsymbol{q})$
+\end_inset
+
+ on the right are all different because they come from different paths.
+ In other words, 
+\begin_inset Formula $z$
+\end_inset
+
+ influences 
+\begin_inset Formula $L$
+\end_inset
+
+ indirectly by influencing three different blocks which block 
+\begin_inset Formula $z$
+\end_inset
+
+ is connected to (not shown in the picture).
+\end_layout
+
+\begin_layout Standard
+What's 
+\begin_inset Formula $\boldsymbol{q}$
+\end_inset
+
+? Why not just 
+\begin_inset Formula $z_{0}$
+\end_inset
+
+? The problem is that 
+\begin_inset Formula $L$
+\end_inset
+
+ may receive input from other blocks on other paths.
+ The variable 
+\begin_inset Formula $\boldsymbol{q}$
+\end_inset
+
+ represents all the input received by 
+\begin_inset Formula $L$
+\end_inset
+
+.
+ Since 
+\begin_inset Formula $z_{0}$
+\end_inset
+
+ influences 
+\begin_inset Formula $L$
+\end_inset
+
+, it's clear that 
+\begin_inset Formula $z_{0}$
+\end_inset
+
+ influences the input 
+\begin_inset Formula $\boldsymbol{q}$
+\end_inset
+
+, but it may not completely determine it.
+\end_layout
+
+\begin_layout Standard
+Let's say 
+\begin_inset Formula $L=(\ldots)k$
+\end_inset
+
+, where 
+\begin_inset Formula $k$
+\end_inset
+
+ is some input.
+ If 
+\begin_inset Formula $k=0$
+\end_inset
+
+, then 
+\begin_inset Formula $L=0$
+\end_inset
+
+ as well and all the derivatives become 
+\begin_inset Formula $0$
+\end_inset
+
+, including 
+\begin_inset Formula $\frac{\partial L}{\partial x}(\boldsymbol{q})$
+\end_inset
+
+, 
+\begin_inset Formula $\frac{\partial L}{\partial y}(\boldsymbol{q})$
+\end_inset
+
+ and 
+\begin_inset Formula $\frac{\partial L}{\partial W}(\boldsymbol{q})$
+\end_inset
+
+! So, all the input is important because it determines at which point the
+ derivatives are computed.
+\end_layout
+
+\begin_layout Standard
+We receive three instances of 
+\begin_inset Formula $\frac{\partial L}{\partial z}(\boldsymbol{q})$
+\end_inset
+
+, each of which measures, as you should know quite well by now, the increment
+ in 
+\begin_inset Formula $L$
+\end_inset
+
+ when 
+\begin_inset Formula $z$
+\end_inset
+
+ is incremented from 
+\begin_inset Formula $z_{0}$
+\end_inset
+
+ to 
+\begin_inset Formula $z_{0}+\epsilon$
+\end_inset
+
+ for a little 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ (the bigger the epsilon, the worse the estimate, unless there is no nonlinearit
+y involved).
+\end_layout
+
+\begin_layout Standard
+We, the block, know how 
+\begin_inset Formula $z$
+\end_inset
+
+ is computed from 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+, 
+\begin_inset Formula $y_{0}$
+\end_inset
+
+ and 
+\begin_inset Formula $W_{0}$
+\end_inset
+
+ so we know how to determine how 
+\begin_inset Formula $z$
+\end_inset
+
+ changes when we move away from 
+\begin_inset Formula $z_{0}=(x_{0},y_{0},W_{0})$
+\end_inset
+
+.
+ Here are the derivations:
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial L}{\partial z}(\boldsymbol{q}) & \leftarrow\text{sum of the three \ensuremath{\frac{\partial L}{\partial z}(\boldsymbol{q})} we received in input (from above)}\\
+\frac{\partial L}{\partial x}(\boldsymbol{q}) & =\frac{\partial L}{\partial z}(\boldsymbol{q})\frac{\partial z}{\partial x}(x_{0},y_{0},W_{0})\\
+ & =\frac{\partial L}{\partial z}(\boldsymbol{q})f_{x}(x_{0},y_{0},W_{0})\\
+\frac{\partial L}{\partial y}(\boldsymbol{q}) & =\frac{\partial L}{\partial z}(\boldsymbol{q})\frac{\partial z}{\partial y}(x_{0},y_{0},W_{0})\\
+ & =\frac{\partial L}{\partial z}(\boldsymbol{q})f_{y}(x_{0},y_{0},W_{0})\\
+\frac{\partial L}{\partial W}(\boldsymbol{q}) & =\frac{\partial L}{\partial z}(\boldsymbol{q})\frac{\partial z}{\partial W}(x_{0},y_{0},W_{0})\\
+ & =\frac{\partial L}{\partial z}(\boldsymbol{q})f_{W}(x_{0},y_{0},W_{0}).
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that while 
+\begin_inset Formula $\frac{\partial L}{\partial x}$
+\end_inset
+
+ depends on 
+\begin_inset Formula $\boldsymbol{q}$
+\end_inset
+
+ (all the input to 
+\begin_inset Formula $L$
+\end_inset
+
+), 
+\begin_inset Formula $\frac{\partial z}{\partial x}$
+\end_inset
+
+ depends on 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+, 
+\begin_inset Formula $y_{0}$
+\end_inset
+
+ and 
+\begin_inset Formula $W_{0}$
+\end_inset
+
+, i.e.
+ all the input to 
+\begin_inset Formula $z$
+\end_inset
+
+.
+ Again—I'll never grow tired of saying it—
+\begin_inset Formula $\frac{\partial z}{\partial x}$
+\end_inset
+
+ depends on all the inputs 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+, 
+\begin_inset Formula $y_{0}$
+\end_inset
+
+, and 
+\begin_inset Formula $W_{0}$
+\end_inset
+
+ because we need to compute the derivative with respect to 
+\begin_inset Formula $x$
+\end_inset
+
+ at the point 
+\begin_inset Formula $(x_{0},y_{0},W_{0})$
+\end_inset
+
+.
+ It's the same old story: we need to consider all the input even if we're
+ deriving just with respect to a part of it.
+\end_layout
+
+\begin_layout Standard
+So, the input from below tells us where we are (it was computed during the
+ forward phase) and we compute the partial derivatives of 
+\begin_inset Formula $f$
+\end_inset
+
+ at 
+\emph on
+that
+\emph default
+ point with respect to the inputs.
+ Once we know 
+\begin_inset Formula $\frac{\partial L}{\partial z}$
+\end_inset
+
+ and 
+\begin_inset Formula $\frac{\partial z}{\partial x}$
+\end_inset
+
+ (or 
+\begin_inset Formula $y,W$
+\end_inset
+
+) we can compute 
+\begin_inset Formula $\frac{\partial L}{\partial x}$
+\end_inset
+
+ by multiplying them (by the way, note that, as we said before, it's as
+ if 
+\begin_inset Formula $\partial z$
+\end_inset
+
+ canceled out).
+\end_layout
+
+\begin_layout Section
+Generalization I
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph7.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One 
+\begin_inset Formula $\frac{\partial L}{\partial z}$
+\end_inset
+
+ is enough because we saw that if there are more than one we can just add
+ them up.
+\end_layout
+
+\begin_layout Standard
+The derivations are:
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial L}{\partial x_{i}}(\boldsymbol{q}) & =\frac{\partial L}{\partial z}(\boldsymbol{q})\frac{\partial z}{\partial x_{i}}(u_{1},...,u_{n})\\
+ & =\frac{\partial L}{\partial z}(\boldsymbol{q})f_{x_{i}}(u_{1},...,u_{n}).
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Generalization I (vector form)
+\end_layout
+
+\begin_layout Standard
+This is equivalent to the previous case but lists of scalars have been replaced
+ with vectors (which, as before, are typeset in 
+\series bold
+lowercase
+\series default
+ 
+\series bold
+bold
+\series default
+).
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph8.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The derivations are:
+\begin_inset Formula 
+\[
+\frac{\partial L}{\partial x_{i}}(\boldsymbol{q})=\frac{\partial L}{\partial z}(\boldsymbol{q})\frac{\partial z}{\partial x_{i}}(\bm{u})=\frac{\partial L}{\partial z}(\boldsymbol{q})f_{x_{i}}(\bm{u}).
+\]
+
+\end_inset
+
+The gradient of 
+\begin_inset Formula $L$
+\end_inset
+
+ at 
+\begin_inset Formula $\boldsymbol{q}$
+\end_inset
+
+ with respect to the vector 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ is defined as
+\begin_inset Formula 
+\begin{align*}
+\nabla_{\boldsymbol{x}}L(\boldsymbol{q}) & =\begin{bmatrix}\cfrac{\partial L}{\partial x_{1}}(\boldsymbol{q})\\
+\vdots\\
+\cfrac{\partial L}{\partial x_{n}}(\boldsymbol{q})
+\end{bmatrix}.
+\end{align*}
+
+\end_inset
+
+The derivation can thus be rewritten as
+\begin_inset Formula 
+\begin{align*}
+\nabla_{\boldsymbol{x}}L(\boldsymbol{q}) & =\frac{\partial L}{\partial z}(\boldsymbol{q})\nabla_{\boldsymbol{x}}z(\bm{u}) & \text{(scalar times a column vector)}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Generalization II
+\end_layout
+
+\begin_layout Standard
+Now 
+\begin_inset Formula $\boldsymbol{z}$
+\end_inset
+
+ is a vector as well, i.e.
+ 
+\begin_inset Formula $\boldsymbol{f}$
+\end_inset
+
+ is an 
+\begin_inset Formula $\mathbb{R}^{n}\to\mathbb{R}^{m}$
+\end_inset
+
+ function, or an 
+\begin_inset Formula $m$
+\end_inset
+
+-dimensional vector of 
+\begin_inset Formula $\mathbb{R}^{n}\to\mathbb{R}$
+\end_inset
+
+ functions.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph9.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+You should be pretty comfortable with this by now, but let's repeat what
+ it means.
+ Modifying 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+ may modify every single 
+\begin_inset Formula $z_{j}$
+\end_inset
+
+ because 
+\begin_inset Formula $\boldsymbol{f}$
+\end_inset
+
+ may use every single 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+ to compute every single 
+\begin_inset Formula $z_{j}$
+\end_inset
+
+.
+ Then every 
+\begin_inset Formula $z_{j}$
+\end_inset
+
+ may modify 
+\begin_inset Formula $L$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We can represent this with a graph:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph10.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that this is just a partial graph because it's enough to focus on a
+ single 
+\begin_inset Formula $x_{i}$
+\end_inset
+
+.
+ The complete graph would be like this:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph10b.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now we can write the expression for 
+\begin_inset Formula $\frac{\partial L}{\partial x_{i}}(\boldsymbol{q})$
+\end_inset
+
+:
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial L}{\partial x_{i}}(\boldsymbol{\boldsymbol{q}}) & =\sum_{j=1}^{m}\path[x_{i},z_{j},L]\\
+ & =\sum_{j=1}^{m}\frac{\partial z_{j}}{\partial x_{i}}(\bm{u})\frac{\partial L}{\partial z_{j}}(\boldsymbol{q})\\
+ & =\left[\frac{\partial\boldsymbol{z}}{\partial x_{i}}(\bm{u})\right]^{T}\nabla_{\boldsymbol{z}}L(\boldsymbol{q}).
+\end{align*}
+
+\end_inset
+
+The term 
+\begin_inset Formula $\frac{\partial\boldsymbol{z}}{\partial x_{i}}(u)$
+\end_inset
+
+ is a 
+\emph on
+Jacobian
+\emph default
+ and is defined like this:
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial\boldsymbol{z}}{\partial x_{i}}(\bm{u}) & =\begin{bmatrix}\cfrac{\partial z_{1}}{\partial x_{i}}(\bm{u})\\
+\vdots\\
+\cfrac{\partial z_{m}}{\partial x_{i}}(\bm{u})
+\end{bmatrix}.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The Jacobian is a generalization of the gradient and it's, in general, the
+ derivative of an 
+\begin_inset Formula $\mathbb{R}^{n}\to\mathbb{R}^{m}$
+\end_inset
+
+ function.
+ If a function 
+\begin_inset Formula $\boldsymbol{f}:\mathbb{R}^{n}\to\mathbb{R}^{m}$
+\end_inset
+
+ is differentiable at 
+\begin_inset Formula $\boldsymbol{u}$
+\end_inset
+
+, then 
+\begin_inset Formula $\boldsymbol{f}$
+\end_inset
+
+ can be 
+\emph on
+locally
+\emph default
+ approximated by a 
+\emph on
+linear
+\emph default
+ function 
+\begin_inset Formula $\mathbb{R}^{n}\to\mathbb{R}^{m}$
+\end_inset
+
+ expressed by the Jacobian:
+\begin_inset Formula 
+\[
+\boldsymbol{f}(\bm{u}+d\boldsymbol{u})\approx\boldsymbol{f}(\bm{u})+\frac{\partial\boldsymbol{f}}{\partial\bm{x}}(\bm{u})d\bm{u}.
+\]
+
+\end_inset
+
+If 
+\begin_inset Formula $\boldsymbol{f}$
+\end_inset
+
+ is linear, we get an equality, because the best linear approximation to
+ a linear function is the linear function itself.
+ If 
+\begin_inset Formula $f$
+\end_inset
+
+ is 
+\begin_inset Formula $\mathbb{R}\to\mathbb{R}$
+\end_inset
+
+, this becomes
+\begin_inset Formula 
+\[
+f(u+du)\approx f(u)+f'(u)du.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We haven't properly defined the (general) Jacobian yet.
+ Let 
+\begin_inset Formula $\boldsymbol{f}(\boldsymbol{x})$
+\end_inset
+
+ be an 
+\begin_inset Formula $\mathbb{R}^{n}\to\mathbb{R}^{m}$
+\end_inset
+
+ differentiable (at least at 
+\begin_inset Formula $\boldsymbol{u}$
+\end_inset
+
+) function.
+ The Jacobian of 
+\begin_inset Formula $\boldsymbol{f}$
+\end_inset
+
+ at 
+\begin_inset Formula $\boldsymbol{u}$
+\end_inset
+
+ with respect to 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ is the 
+\begin_inset Formula $m\times n$
+\end_inset
+
+ 
+\emph on
+matrix
+\emph default
+ 
+\begin_inset Formula $\frac{\partial\boldsymbol{f}}{\partial\boldsymbol{x}}(\boldsymbol{u})$
+\end_inset
+
+ defined as
+\begin_inset Formula 
+\[
+\left[\frac{\partial\boldsymbol{f}}{\partial\bm{x}}(\bm{u})\right]_{i,j}=\frac{\partial f_{i}}{x_{j}}(\bm{u}),
+\]
+
+\end_inset
+
+or, more explicitly,
+\begin_inset Formula 
+\[
+\frac{\partial\boldsymbol{f}}{\partial\boldsymbol{x}}(\boldsymbol{u})=\begin{bmatrix}\cfrac{\partial f_{1}}{\partial x_{1}}(\boldsymbol{u}) & \cfrac{\partial f_{1}}{\partial x_{2}}(\boldsymbol{u}) & \cdots & \cfrac{\partial f_{1}}{\partial x_{n}}(\boldsymbol{u})\\
+\cfrac{\partial f_{2}}{\partial x_{1}}(\boldsymbol{u}) & \cfrac{\partial f_{2}}{\partial x_{2}}(\boldsymbol{u}) & \cdots & \cfrac{\partial f_{2}}{\partial x_{n}}(\boldsymbol{u})\\
+\vdots & \vdots & \ddots & \vdots\\
+\cfrac{\partial f_{m}}{\partial x_{1}}(\boldsymbol{u}) & \cfrac{\partial f_{m}}{\partial x_{2}}(\boldsymbol{u}) & \cdots & \cfrac{\partial f_{m}}{\partial x_{n}}(\boldsymbol{u})
+\end{bmatrix}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As we said before, 
+\begin_inset Formula $\boldsymbol{f}$
+\end_inset
+
+ can be seen as a vector of 
+\begin_inset Formula $\mathbb{R}^{n}\to\mathbb{R}$
+\end_inset
+
+ functions each of which takes 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ and returns a single coordinate of 
+\begin_inset Formula $\boldsymbol{z}=\boldsymbol{f}(\boldsymbol{x})$
+\end_inset
+
+.
+ Therefore, 
+\begin_inset Formula $\frac{\partial\boldsymbol{f}}{\partial\boldsymbol{x}}(\boldsymbol{u})$
+\end_inset
+
+ is a matrix whose 
+\begin_inset Formula $i$
+\end_inset
+
+-th row is the 
+\emph on
+transpose
+\emph default
+ of the gradient of 
+\begin_inset Formula $f_{i}$
+\end_inset
+
+ at 
+\begin_inset Formula $\boldsymbol{u}$
+\end_inset
+
+ with respect to 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+:
+\begin_inset Formula 
+\begin{align*}
+\left[\frac{\partial\boldsymbol{f}}{\partial\bm{x}}(\bm{u})\right]_{i,\cdot} & =\left[\nabla_{\boldsymbol{x}}f_{i}(\bm{u})\right]^{T} & \text{(row vector)}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To remember the definition of the Jacobian, note that with matrices the
+ order is always 
+\emph on
+rows
+\emph default
+
+\begin_inset Formula $\to$
+\end_inset
+
+
+\emph on
+columns
+\emph default
+:
+\end_layout
+
+\begin_layout Enumerate
+if 
+\begin_inset Formula $\boldsymbol{A}\in\mathbb{R}^{m\times n}$
+\end_inset
+
+ then 
+\begin_inset Formula $\boldsymbol{A}$
+\end_inset
+
+ has 
+\begin_inset Formula $m$
+\end_inset
+
+ rows and 
+\begin_inset Formula $n$
+\end_inset
+
+ columns;
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $A_{i,j}$
+\end_inset
+
+ is the element on the 
+\begin_inset Formula $i$
+\end_inset
+
+-th row and 
+\begin_inset Formula $j$
+\end_inset
+
+-th column;
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\frac{\partial\boldsymbol{z}}{\partial\boldsymbol{x}}$
+\end_inset
+
+ is the matrix where 
+\begin_inset Formula $\boldsymbol{z}$
+\end_inset
+
+ changes vertically across rows and 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ changes horizontally across columns.
+\end_layout
+
+\begin_layout Standard
+The gradient, when it exists, is the transpose of the Jacobian.
+ In fact, if 
+\begin_inset Formula $f(\boldsymbol{x})$
+\end_inset
+
+ is 
+\begin_inset Formula $\mathbb{R}^{n}\to\mathbb{R}$
+\end_inset
+
+ then
+\begin_inset Formula 
+\begin{align*}
+\nabla_{\boldsymbol{x}}f(\bm{u}) & =\left[\frac{\partial f}{\partial\bm{x}}(\bm{u})\right]^{T} & \text{(column vector)}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let's get back to our blocks now.
+ We derived the following:
+\begin_inset Formula 
+\begin{align*}
+\frac{\partial L}{\partial x_{i}}(\boldsymbol{\boldsymbol{q}}) & =\sum_{j=1}^{m}\frac{\partial z_{j}}{\partial x_{i}}(\bm{u})\frac{\partial L}{\partial z_{j}}(\boldsymbol{q})\\
+ & =\left[\frac{\partial\boldsymbol{z}}{\partial x_{i}}(\bm{u})\right]^{T}\nabla_{\boldsymbol{z}}L(\boldsymbol{q}).
+\end{align*}
+
+\end_inset
+
+From this we get
+\begin_inset Formula 
+\begin{equation}
+\nabla_{\boldsymbol{x}}L(\boldsymbol{q})=\left[\frac{\partial\bm{z}}{\partial\bm{x}}(\bm{u})\right]^{T}\nabla_{\boldsymbol{z}}L(\boldsymbol{q}).\label{eq:grad=jacobian^Tgrad}
+\end{equation}
+
+\end_inset
+
+To remember equality
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:grad=jacobian^Tgrad"
+
+\end_inset
+
+, note that 
+\begin_inset Formula $\boldsymbol{z}$
+\end_inset
+
+ changes 
+\emph on
+horizontally
+\emph default
+ in 
+\begin_inset Formula $\left[\frac{\partial\bm{z}}{\partial\bm{x}}(\bm{u})\right]^{T}$
+\end_inset
+
+ while it changes 
+\emph on
+vertically
+\emph default
+ in 
+\begin_inset Formula $\nabla_{\boldsymbol{z}}L(\boldsymbol{q})$
+\end_inset
+
+, so, since matrix multiplication is 
+\emph on
+row by column
+\emph default
+, this is what we want.
+\end_layout
+
+\begin_layout Standard
+This formula works even when we're dealing with general 
+\emph on
+tensors
+\emph default
+ 
+\begin_inset Formula $\boldsymbol{\mathsf{X}}$
+\end_inset
+
+, 
+\begin_inset Formula $\boldsymbol{\mathsf{U}}$
+\end_inset
+
+, and 
+\begin_inset Formula $\boldsymbol{\mathsf{Z}}$
+\end_inset
+
+.
+ The trick is to 
+\emph on
+vectorize
+\emph default
+ the tensors.
+ For instance, consider the following 
+\begin_inset Formula $3$
+\end_inset
+
+-dimensional tensor:
+\begin_inset Formula 
+\begin{align*}
+\boldsymbol{X}_{1,\cdot,\cdot} & =\begin{bmatrix}1 & 2 & 3\\
+4 & 5 & 6\\
+7 & 8 & 9
+\end{bmatrix}\\
+\boldsymbol{X}_{2,\cdot,\cdot} & =\begin{bmatrix}a & b & c\\
+d & e & f\\
+g & h & i
+\end{bmatrix}.
+\end{align*}
+
+\end_inset
+
+We can vectorize 
+\begin_inset Formula $\boldsymbol{\mathsf{X}}$
+\end_inset
+
+ as follows:
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula 
+\[
+\mathrm{vec}(\boldsymbol{\mathsf{X}})=\begin{bmatrix}1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & a & b & c & d & e & f & g & h & i\end{bmatrix}
+\]
+
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+and so, for instance, 
+\begin_inset Formula $\mathrm{vec}(\boldsymbol{\mathsf{X}})_{14}=X_{2,2,2}=e$
+\end_inset
+
+.
+ Of course, all the tensors must be vectorized consistently or we'll get
+ wrong results.
+\end_layout
+
+\begin_layout Section
+Dynamic Programming
+\end_layout
+
+\begin_layout Standard
+Although the algorithm is called backprop, which suggests that we retrace
+ our steps, we can also use 
+\emph on
+dynamic programming
+\emph default
+.
+ That is, we can compute the derivatives recursively in a 
+\emph on
+lazy
+\emph default
+ way (i.e.
+ only when needed) and save the already computed derivatives in a table
+ lest we repeat computations.
+\end_layout
+
+\begin_layout Standard
+For instance, consider this graph:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph11.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We only want to compute 
+\begin_inset Formula $\frac{\partial L}{\partial W_{1}}$
+\end_inset
+
+, 
+\begin_inset Formula $\frac{\partial L}{\partial W_{2}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\frac{\partial L}{\partial W_{3}}$
+\end_inset
+
+.
+ I'll write the steps performed by a dynamic programming algorithm which
+ computes the 3 derivatives.
+ I'll use the following format:
+\begin_inset Formula 
+\[
+\begin{array}{ll}
+\text{operation 1} & \text{(op 1 calls recursively op 1a and op 1b)}\\
+\hspace{1em}\text{operation 1a}\\
+\hspace{1em}\text{operation 1b} & \text{(op 1b calls recursively op 1b1 and op 1b2)}\\
+\hspace{1em}\hspace{1em}\text{operation 1b1}\\
+\hspace{1em}\hspace{1em}\text{operation 1b2}\\
+\text{operation 2}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here's the graph again (for your convenience) and the steps, assuming that
+ the 
+\begin_inset Quotes eld
+\end_inset
+
+forward
+\begin_inset Quotes erd
+\end_inset
+
+ phase has already taken place:
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Preview
+
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand input
+preview true
+filename "graph12.tex"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that we don't visit every node of the graph and that we don't recompute
+ 
+\begin_inset Formula $\frac{\partial L}{\partial c}$
+\end_inset
+
+ which is needed for both 
+\begin_inset Formula $\frac{\partial L}{\partial W_{2}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\frac{\partial L}{\partial W_{3}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Efficiency
+\end_layout
+
+\begin_layout Standard
+Backprop is not optimum.
+ In fact, computing derivatives over a graph is 
+\emph on
+NP-complete
+\emph default
+ because expressions can be simplified in non-obvious ways.
+ For instance, 
+\begin_inset Formula $s'(x)=s(x)(1-s(x))$
+\end_inset
+
+, where 
+\begin_inset Formula $s$
+\end_inset
+
+ is the 
+\emph on
+sigmoid
+\emph default
+ function.
+ Since 
+\begin_inset Formula $s(x)=1/(1+\exp(-x))$
+\end_inset
+
+, an algorithm might waste time computing and composing derivatives without
+ coming up with the simplified expression I wrote above.
+ This argument is only valid if the graph is analyzed once and then used
+ many times to compute the derivatives.
+\end_layout
+
+\begin_layout Standard
+There's another thing to be said about the efficiency of backprop or its
+ dynamic programming variant described above.
+ We saw that in general each block of the graph performs the following computati
+on:
+\begin_inset Formula 
+\[
+\nabla_{\boldsymbol{x}}L(\boldsymbol{q})=\left[\frac{\partial\bm{z}}{\partial\bm{x}}(\bm{u})\right]^{T}\nabla_{\boldsymbol{z}}L(\boldsymbol{q}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This is a 
+\emph on
+matrix-vector
+\emph default
+ multiplication which returns another vector.
+ So, in general, along a path 
+\begin_inset Formula $x\to a\to b\to\cdots\to y\to z\to L$
+\end_inset
+
+ we have something like
+\begin_inset Formula 
+\begin{equation}
+\nabla_{\boldsymbol{x}}L=\left[\frac{\partial\boldsymbol{a}}{\partial\boldsymbol{x}}\right]^{T}\left[\frac{\partial\boldsymbol{b}}{\partial\boldsymbol{a}}\right]^{T}\cdots\left[\frac{\partial\boldsymbol{z}}{\partial\boldsymbol{y}}\right]^{T}\nabla_{\boldsymbol{z}}L.\label{eq:matrix-vector-case}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Backprop computes this product from right to left (
+\emph on
+foldr
+\emph default
+):
+\begin_inset Formula 
+\[
+\nabla_{\boldsymbol{x}}L=\left(\left[\frac{\partial\boldsymbol{a}}{\partial\boldsymbol{x}}\right]^{T}\left(\left[\frac{\partial\boldsymbol{b}}{\partial\boldsymbol{a}}\right]^{T}\cdots\left(\left[\frac{\partial\boldsymbol{z}}{\partial\boldsymbol{y}}\right]^{T}\nabla_{\boldsymbol{z}}L\right)\cdots\right)\right).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If 
+\begin_inset Formula $D$
+\end_inset
+
+ is the maximum number of dimensions of the vectors involved and 
+\begin_inset Formula $N$
+\end_inset
+
+ is the number of 
+\emph on
+matrix-vector
+\emph default
+ multiplications, the whole product takes 
+\begin_inset Formula $O(ND^{2})$
+\end_inset
+
+ time.
+ Computing the same product from left to right (
+\emph on
+foldl
+\emph default
+) would take 
+\begin_inset Formula $O(ND^{3})$
+\end_inset
+
+ time because it would involve 
+\emph on
+matrix-matrix 
+\emph default
+multiplications.
+ So it seems that backprop does the right thing.
+\end_layout
+
+\begin_layout Standard
+But what happens if 
+\begin_inset Formula $x$
+\end_inset
+
+ is just a scalar and 
+\begin_inset Formula $\boldsymbol{L}$
+\end_inset
+
+ a vector? The situation is reversed! Now we have a (row) vector on the
+ left and all matrices on the right:
+\begin_inset Formula 
+\begin{equation}
+\left[\frac{\partial\boldsymbol{L}}{\partial x}\right]^{T}=\left[\frac{\partial\boldsymbol{a}}{\partial x}\right]^{T}\left[\frac{\partial\boldsymbol{b}}{\partial\boldsymbol{a}}\right]^{T}\cdots\left[\frac{\partial\boldsymbol{z}}{\partial\boldsymbol{y}}\right]^{T}\left[\frac{\partial\boldsymbol{L}}{\partial\boldsymbol{z}}\right]^{T}\label{eq:vector-matrix-case}
+\end{equation}
+
+\end_inset
+
+Note that to derive equality
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:vector-matrix-case"
+
+\end_inset
+
+ you just need to rewrite the two gradients in equality
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:matrix-vector-case"
+
+\end_inset
+
+ as Jacobians (remembering that the gradient and the Jacobian, when equivalent,
+ are one the 
+\emph on
+transpose
+\emph default
+ of the other) and the formula will hold even when 
+\begin_inset Formula $\boldsymbol{L}$
+\end_inset
+
+ is a vector and 
+\begin_inset Formula $x$
+\end_inset
+
+ a scalar.
+\end_layout
+
+\begin_layout Standard
+That's it.
+ I hope you found this tutorial useful.
+ Let me know if you find any mistakes or something is unclear.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "theano-full,tensorflow"
+options "plain"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+printbibliography
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

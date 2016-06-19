@@ -1,0 +1,104 @@
+\usetikzlibrary{shadings,shadows,shapes.arrows}
+
+\begin{tikzpicture}
+	\tikzstyle{blockstyle} = [draw,drop shadow,outer sep=3,inner sep=7,minimum size=57,line width=1, thin, draw=black!55, top color=white,bottom color=cyan]
+	
+	%%%%%%%%%%%%%%
+	% Left figure
+	%%%%%%%%%%%%%%
+	
+	\def\k{0.9}
+	\def\l3{-0.8}		% left x coord for 3 elements
+	\def\r3{0.8}		% right x coord for 3 elements
+	\node (A1) at (\l3,3*\k) {$z_0$};
+	\node (A2) at (0,3*\k) {$z_0$};
+	\node (A3) at (\r3,3*\k) {$z_0$};
+	\node[blockstyle] (B) at (0,0*\k) {$z = f(x,y,W)$};
+	\node (C1) at (-0.5,-3*\k) {$x_0$};
+	\node (C2) at (0.5,-3*\k) {$y_0$};
+	\node (W) at (2.8,0*\k) {$W_0$};
+	
+	\def\uy{3.5*\k}
+	\coordinate (U1) at (\l3,\uy);
+	\coordinate (U2) at (0,\uy);
+	\coordinate (U3) at (\r3,\uy);
+	\coordinate (V1) at (\l3,5*\k);
+	\coordinate (V2) at (0,5*\k);
+	\coordinate (V3) at (\r3,5*\k);
+	
+	\path[<-] (A1) edge node {} (A1 |- B.north);
+	\path[<-] (A2) edge node {} (A2 |- B.north);
+	\path[<-] (A3) edge node {} (A3 |- B.north);
+	\path[<-] (B.south -| C1) edge node [right] {} (C1);
+	\path[<-] (B.south -| C2) edge node [right] {} (C2);
+	\path[<-] (B) edge node {} (W);
+	
+	\draw (A1) -- (U1);
+	\draw (U1)[dashed] -- (V1);
+	\draw (A2) -- (U2);
+	\draw (U2)[dashed] -- (V2);
+	\draw (A3) -- (U3);
+	\draw (U3)[dashed] -- (V3);
+	
+	\node[align=left,blue,font=\LARGE] at (0,5.5) {Forward phase};
+	
+	%%%%%%%%%%%%%%
+	% Right figure
+	%%%%%%%%%%%%%%
+
+	\begin{scope}[xshift=180pt]
+		\def\k{0.9}
+		
+		\coordinate (l3) at (-0.8,0);		% left for 3 objects
+		\coordinate (r3) at (0.8,0);
+		\coordinate (sl3) at (-1.4,0);		% shifted l3
+		\coordinate (sr3) at (1.4,0);
+
+		\coordinate (l2) at (-0.5,0);		% left foor 2 objects
+		\coordinate (r2) at (0.5,0);
+		\coordinate (sl2) at (-0.8,0);		% shifted l2
+		\coordinate (sr2) at (0.8,0);
+
+		\def\label1{$\cfrac{\partial L}{\partial z}(\bm q)$}
+		\node (A1) at (sl3 |- 0,3*\k) {\label1};
+		\node (A2) at (0,3*\k) {\label1};
+		\node (A3) at (sr3 |- 0,3*\k) {\label1};
+		\node[blockstyle] (B) at (0,0*\k) {$z = f(x,y,W)$};
+		\node (C1) at (sl2 |- 0,-3*\k) {$\cfrac{\partial L}{\partial x}(\bm q)$};
+		\node (C2) at (sr2 |- 0,-3*\k) {$\cfrac{\partial L}{\partial y}(\bm q)$};
+		\node (W) at (3,0*\k) {$\cfrac{\partial L}{\partial W}(\bm q)$};
+		
+		\def\uy{3.8*\k}
+		\coordinate (U1) at (sl3 |- 0,\uy);
+		\coordinate (U2) at (0,\uy);
+		\coordinate (U3) at (sr3 |- 0,\uy);
+		\coordinate (V1) at (sl3 |- 0,5*\k);
+		\coordinate (V2) at (0,5*\k);
+		\coordinate (V3) at (sr3 |- 0,5*\k);
+		
+		\path[->] (A1) edge node {} (l3 |- B.north);
+		\path[->] (A2) edge node {} (A2 |- B.north);
+		\path[->] (A3) edge node {} (r3 |- B.north);
+		\path[->] (l2 |- B.south) edge node [right] {} (sl2 |- C1.north);
+		\path[->] (r2 |- B.south) edge node [right] {} (sr2 |- C2.north);
+		\path[->] (B) edge node {} (W);
+		
+		\draw (A1) -- (U1);
+		\draw (U1)[dashed] -- (V1);
+		\draw (A2) -- (U2);
+		\draw (U2)[dashed] -- (V2);
+		\draw (A3) -- (U3);
+		\draw (U3)[dashed] -- (V3);
+		
+		\node[align=left,blue,font=\LARGE] at (0,5.5) {Backward phase};
+	\end{scope}
+
+	\def\labeltext{
+		Note:\\[5]
+		\;\;\;$\begin{aligned}
+			z_0 & =f(x_0,y_0,W_0)\\
+			\bm q &=\text{all the input sent to } L
+		\end{aligned}$
+	}
+	\node[align=left,font=\large] at (4,-4.5) {\labeltext};
+\end{tikzpicture}
