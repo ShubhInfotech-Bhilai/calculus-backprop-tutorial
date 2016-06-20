@@ -405,54 +405,11 @@ the derivative of
 \begin_inset Formula $h$
 \end_inset
 
-, we have
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-Note that I often write 
-\begin_inset Quotes eld
+, for 
+\begin_inset Formula $dx\to0$
 \end_inset
 
-
-\begin_inset Formula $=$
-\end_inset
-
-
-\begin_inset Quotes erd
-\end_inset
-
- instead of 
-\begin_inset Quotes eld
-\end_inset
-
-
-\begin_inset Formula $\approx$
-\end_inset
-
-
-\begin_inset Quotes erd
-\end_inset
-
- (i.e.
- 
-\begin_inset Quotes eld
-\end_inset
-
-
-\emph on
-is approximately equal to
-\emph default
-
-\begin_inset Quotes erd
-\end_inset
-
-), for convenience.
-\end_layout
-
-\end_inset
-
-:
+, we have:
 \begin_inset Formula 
 \begin{alignat*}{2}
 h(x+dx) & =h(x)+h'(x)dx & \implies\\
