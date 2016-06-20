@@ -20,6 +20,8 @@
 
 \addbibresource{theano-full.bib}
 \addbibresource{tensorflow.bib}
+\addbibresource{werbos74.bib}
+\addbibresource{werbos94.bib}
 \end_preamble
 \use_default_options true
 \maintain_unincluded_children false
@@ -1473,6 +1475,18 @@ As I said before, I'm throwing at you different notations on purpose so
 
 \begin_layout Section
 Why backprop?
+\end_layout
+
+\begin_layout Standard
+If you're interested in the history of backpropagation, see the work of
+ Paul Werbos
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Werbos:74,Werbos:1994:RBO:175610"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -3400,7 +3414,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
-bibfiles "theano-full,tensorflow"
+bibfiles "tensorflow,theano-full,werbos74,werbos94"
 options "plain"
 
 \end_inset
